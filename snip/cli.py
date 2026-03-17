@@ -4,8 +4,12 @@ import sys
 import click
 
 from snip.config import config_init
-from snip.parser import load_snippets
+from snip.models import Snippet
 from snip.search import search
+from snip.storage import save_snippet
+
+PROMPT_KEY_COLOR = "green"
+PROMPT_CONTENT_COLOR = "cyan"
 
 
 class DefaultSearchGroup(click.Group):
@@ -61,6 +65,16 @@ def list_cmd(ctx: click.Context) -> None:
     snippets = load_snippets(ctx.obj["file"])
     for snippet in snippets:
         click.echo(snippet.key)
+
+
+@main.command("new")
+def new_cmd() -> None:
+    """Create a new snippet."""
+    key = click.prompt(click.style("key", fg=PROMPT_KEY_COLOR))
+    content = click.prompt(click.style("content", fg=PROMPT_CONTENT_COLOR))
+    tags_input = click.prompt(click.style("tags", fg=PROMPT_CONTENT_COLOR), default="")
+    tags = [t.strip() for t in tags_input.split(",") if t.strip()]
+    save_snippet(Snippet(key=key, content=content, tags=tags))
 
 
 @main.command("configure")
