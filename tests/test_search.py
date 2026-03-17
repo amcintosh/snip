@@ -1,8 +1,5 @@
-import pytest
-
 from snip.models import Snippet
 from snip.search import search
-
 
 SNIPPETS = [
     Snippet(key="git commit", content="git commit -m 'msg'"),

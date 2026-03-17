@@ -7,4 +7,3 @@ class Snippet:
     key: str
     content: str
     tags: List[str] = field(default_factory=list)
-

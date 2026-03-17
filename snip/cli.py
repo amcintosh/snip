@@ -10,6 +10,7 @@ from snip.storage import load_snippets, save_snippet
 
 PROMPT_KEY_COLOR = "green"
 PROMPT_CONTENT_COLOR = "cyan"
+PROMPT_USER_CONTENT = "white"
 
 
 class DefaultSearchGroup(click.Group):
@@ -23,28 +24,30 @@ class DefaultSearchGroup(click.Group):
 @click.group(cls=DefaultSearchGroup)
 @click.pass_context
 def main(ctx: click.Context) -> None:
-    """CLI tool for storing and searching text snippet."""
+    """Simple tool for storing and searching text snippets."""
     ctx.ensure_object(dict)
 
 
 @main.command()
 @click.argument("snippet")
 @click.option(
-    "--case-sensitive", "-c",
+    "--case-sensitive",
+    "-c",
     is_flag=True,
     default=False,
     help="Use case-sensitive matching.",
 )
 @click.option(
-    "--no-clipboard", "-n",
+    "--no-clipboard",
+    "-n",
     is_flag=True,
     default=False,
     help="Do not copy the top result to the clipboard.",
 )
 @click.pass_context
 def search_cmd(ctx: click.Context, snippet: str, case_sensitive: bool, no_clipboard: bool) -> None:
-    """Search for SNIPPET and print its content. Saves to clipboard by default."""
-    snippets = load_snippets(ctx.obj["file"])
+    """Search for a snippet and print its content. Save to clipboard by default."""
+    snippets = load_snippets()
     results = search(snippets, snippet, case_sensitive=case_sensitive)
 
     if not results:
@@ -60,19 +63,24 @@ def search_cmd(ctx: click.Context, snippet: str, case_sensitive: bool, no_clipbo
 
 @main.command("list")
 def list_cmd() -> None:
-    """List all snippet."""
+    """List all snippets."""
     snippets = load_snippets()
     for snippet in snippets:
-        click.echo(click.style("Key: ", fg=PROMPT_KEY_COLOR) + click.style(snippet.key, fg="white"))
-        click.echo(click.style("  Content: ", fg=PROMPT_CONTENT_COLOR) + click.style(snippet.content, fg="white"))
+        click.echo(click.style("Key: ", fg=PROMPT_KEY_COLOR) + click.style(snippet.key, fg=PROMPT_USER_CONTENT))
+        click.echo(
+            click.style("  Content: ", fg=PROMPT_CONTENT_COLOR) + click.style(snippet.content, fg=PROMPT_USER_CONTENT)
+        )
         if snippet.tags:
-            click.echo(click.style("  Tags: ", fg=PROMPT_CONTENT_COLOR) + click.style(", ".join(snippet.tags), fg="white"))
+            click.echo(
+                click.style("  Tags: ", fg=PROMPT_CONTENT_COLOR)
+                + click.style(", ".join(snippet.tags), fg=PROMPT_USER_CONTENT)
+            )
         click.echo("-" * 30)
 
 
 @main.command("new")
 def new_cmd() -> None:
-    """Create a new snippet."""
+    """Create a new snippet"""
     key = click.prompt(click.style("key", fg=PROMPT_KEY_COLOR))
     content = click.prompt(click.style("content", fg=PROMPT_CONTENT_COLOR))
     tags_input = click.prompt(click.style("tags", fg=PROMPT_CONTENT_COLOR), default="")
@@ -82,6 +90,6 @@ def new_cmd() -> None:
 
 @main.command("configure")
 def configure_cmd() -> None:
-    """Create default configuration and open it in your editor."""
+    """Edit config file"""
     config_path = config_init()
     click.edit(filename=config_path)

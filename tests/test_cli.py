@@ -60,8 +60,10 @@ class TestListCommand:
 class TestConfigureCommand:
     def test_opens_editor(self, runner, tmp_path):
         config_path = str(tmp_path / "config.toml")
-        with patch("snip.cli.config_init", return_value=config_path), \
-             patch("click.edit") as mock_edit:
+        with patch(
+            "snip.cli.config_init",
+            return_value=config_path
+        ), patch("click.edit") as mock_edit:
             result = runner.invoke(main, ["configure"])
         assert result.exit_code == 0
         mock_edit.assert_called_once_with(filename=config_path)
