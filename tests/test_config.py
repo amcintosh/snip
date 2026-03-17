@@ -1,0 +1,25 @@
+from unittest.mock import mock_open, patch
+
+from snip.config import DEFAULT_CONFIG, config_init
+
+CONFIG_PATH = "/mock/snip/config.toml"
+
+
+def test_creates_config_with_defaults():
+    mock_file = mock_open()
+    with patch("snip.config.get_config_path", return_value=CONFIG_PATH), \
+         patch("snip.config.os.path.exists", return_value=False), \
+         patch("snip.config.os.makedirs"), \
+         patch("builtins.open", mock_file):
+        result = config_init()
+    mock_file().write.assert_called_once_with(DEFAULT_CONFIG)
+    assert result == CONFIG_PATH
+
+
+def test_does_not_overwrite_existing():
+    mock_file = mock_open()
+    with patch("snip.config.get_config_path", return_value=CONFIG_PATH), \
+         patch("snip.config.os.path.exists", return_value=True), \
+         patch("builtins.open", mock_file):
+        config_init()
+    mock_file().write.assert_not_called()

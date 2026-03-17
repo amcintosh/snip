@@ -12,7 +12,7 @@ DEFAULT_CONFIG = """\
 """
 
 
-def get_config_path() -> str:
+def get_config_path() -> str:  # pragma: no cover
     app_dir = click.get_app_dir("snip")
     return os.path.join(app_dir, "config.toml")
 

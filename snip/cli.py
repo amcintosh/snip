@@ -6,7 +6,7 @@ import click
 from snip.config import config_init
 from snip.models import Snippet
 from snip.search import search
-from snip.storage import save_snippet
+from snip.storage import load_snippets, save_snippet
 
 PROMPT_KEY_COLOR = "green"
 PROMPT_CONTENT_COLOR = "cyan"
@@ -59,12 +59,15 @@ def search_cmd(ctx: click.Context, snippet: str, case_sensitive: bool, no_clipbo
 
 
 @main.command("list")
-@click.pass_context
-def list_cmd(ctx: click.Context) -> None:
+def list_cmd() -> None:
     """List all snippet."""
-    snippets = load_snippets(ctx.obj["file"])
+    snippets = load_snippets()
     for snippet in snippets:
-        click.echo(snippet.key)
+        click.echo(click.style("Key: ", fg=PROMPT_KEY_COLOR) + click.style(snippet.key, fg="white"))
+        click.echo(click.style("  Content: ", fg=PROMPT_CONTENT_COLOR) + click.style(snippet.content, fg="white"))
+        if snippet.tags:
+            click.echo(click.style("  Tags: ", fg=PROMPT_CONTENT_COLOR) + click.style(", ".join(snippet.tags), fg="white"))
+        click.echo("-" * 30)
 
 
 @main.command("new")
