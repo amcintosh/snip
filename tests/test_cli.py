@@ -106,8 +106,8 @@ class TestSearchCommand:
         assert "index=blah" in result.output
 
     def test_match__no_clipboard_flag(self, runner):
-        with patch("snip.cli.load_snippets", return_value=self.SNIPPETS), \
-             patch("snip.cli.subprocess.run") as mock_run:
+        with (patch("snip.cli.load_snippets", return_value=self.SNIPPETS),
+              patch("snip.cli.subprocess.run") as mock_run):
             result = runner.invoke(main, ["search", "splunk-index", "--no-clipboard"])
         assert result.exit_code == 0
         mock_run.assert_not_called()
@@ -117,6 +117,15 @@ class TestSearchCommand:
             result = runner.invoke(main, ["splunk-index"])
         assert result.exit_code == 0
         assert "index=blah" in result.output
+
+
+class TestEditCommand:
+    def test_edit__opens_editor(self, runner, tmp_path):
+        snippets_path = str(tmp_path / "snippets.toml")
+        with patch("snip.cli.get_snippets_path", return_value=snippets_path), patch("click.edit") as mock_edit:
+            result = runner.invoke(main, ["edit"])
+        assert result.exit_code == 0
+        mock_edit.assert_called_once_with(filename=snippets_path)
 
 
 class TestConfigureCommand:

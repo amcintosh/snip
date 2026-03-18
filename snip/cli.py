@@ -6,7 +6,7 @@ import click
 from snip.config import config_init
 from snip.models import Snippet
 from snip.search import search
-from snip.storage import load_snippets, save_snippet
+from snip.storage import get_snippets_path, load_snippets, save_snippet
 
 PROMPT_KEY_COLOR = "green"
 PROMPT_CONTENT_COLOR = "cyan"
@@ -51,7 +51,9 @@ def main(ctx: click.Context) -> None:
     help="Do not copy the top result to the clipboard.",
 )
 @click.pass_context
-def search_cmd(ctx: click.Context, snippet: str | None, tag: str | None, case_sensitive: bool, no_clipboard: bool) -> None:
+def search_cmd(
+    ctx: click.Context, snippet: str | None, tag: str | None, case_sensitive: bool, no_clipboard: bool
+) -> None:
     """Search for a snippet and print its content. Save to clipboard by default."""
     if snippet is None and tag is None:
         click.echo("Provide a search query or --tag.", err=True)
@@ -93,7 +95,7 @@ def list_cmd() -> None:
 
 @main.command("new")
 def new_cmd() -> None:
-    """Create a new snippet"""
+    """Create a new snippet."""
     key = click.prompt(click.style("key", fg=PROMPT_KEY_COLOR))
     content = click.prompt(click.style("content", fg=PROMPT_CONTENT_COLOR))
     tags_input = click.prompt(click.style("tags", fg=PROMPT_CONTENT_COLOR), default="")
@@ -101,8 +103,14 @@ def new_cmd() -> None:
     save_snippet(Snippet(key=key, content=content, tags=tags))
 
 
+@main.command("edit")
+def edit_cmd() -> None:
+    """Edit snippets."""
+    click.edit(filename=get_snippets_path())
+
+
 @main.command("configure")
 def configure_cmd() -> None:
-    """Edit config file"""
+    """Edit config file."""
     config_path = config_init()
     click.edit(filename=config_path)
