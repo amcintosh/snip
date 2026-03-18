@@ -5,7 +5,7 @@ from snip.config import DEFAULT_CONFIG, config_init
 CONFIG_PATH = "/mock/snip/config.toml"
 
 
-def test_creates_config_with_defaults():
+def test_config_init__creates_config_with_defaults():
     mock_file = mock_open()
     with (
         patch("snip.config.get_config_path", return_value=CONFIG_PATH),
@@ -18,7 +18,7 @@ def test_creates_config_with_defaults():
     assert result == CONFIG_PATH
 
 
-def test_does_not_overwrite_existing():
+def test_config_init__does_not_overwrite_existing():
     mock_file = mock_open()
     with (
         patch("snip.config.get_config_path", return_value=CONFIG_PATH),

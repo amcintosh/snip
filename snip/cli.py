@@ -29,7 +29,13 @@ def main(ctx: click.Context) -> None:
 
 
 @main.command()
-@click.argument("snippet")
+@click.argument("snippet", required=False, default=None)
+@click.option(
+    "--tag",
+    "-t",
+    default=None,
+    help="Filter snippets by tag.",
+)
 @click.option(
     "--case-sensitive",
     "-c",
@@ -45,13 +51,20 @@ def main(ctx: click.Context) -> None:
     help="Do not copy the top result to the clipboard.",
 )
 @click.pass_context
-def search_cmd(ctx: click.Context, snippet: str, case_sensitive: bool, no_clipboard: bool) -> None:
+def search_cmd(ctx: click.Context, snippet: str | None, tag: str | None, case_sensitive: bool, no_clipboard: bool) -> None:
     """Search for a snippet and print its content. Save to clipboard by default."""
+    if snippet is None and tag is None:
+        click.echo("Provide a search query or --tag.", err=True)
+        sys.exit(1)
+
     snippets = load_snippets()
-    results = search(snippets, snippet, case_sensitive=case_sensitive)
+    results = search(snippets, snippet, case_sensitive=case_sensitive, tag=tag)
 
     if not results:
-        click.echo(f"No snippet found for: {snippet}", err=True)
+        label = snippet
+        if snippet is None:
+            label = f"tag:{tag}"
+        click.echo(f"No snippet found for: {label}", err=True)
         sys.exit(1)
 
     if sys.platform == "darwin" and not no_clipboard:
