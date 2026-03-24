@@ -7,6 +7,7 @@ from snip.config import config_init
 from snip.models import Snippet
 from snip.search import search
 from snip.storage import get_snippets_path, load_snippets, save_snippet
+from snip.sync import sync
 
 PROMPT_KEY_COLOR = "green"
 PROMPT_CONTENT_COLOR = "cyan"
@@ -114,3 +115,9 @@ def configure_cmd() -> None:
     """Edit config file."""
     config_path = config_init()
     click.edit(filename=config_path)
+
+
+@main.command("sync")
+def sync_cmd() -> None:
+    """Sync snippets with GitHub Gist."""
+    sync()

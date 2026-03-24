@@ -1,4 +1,5 @@
 import os
+import tomllib
 
 import click
 
@@ -15,6 +16,14 @@ DEFAULT_CONFIG = """\
 def get_config_path() -> str:  # pragma: no cover
     app_dir = click.get_app_dir("snip")
     return os.path.join(app_dir, "config.toml")
+
+
+def load_config() -> dict:
+    config_path = get_config_path()
+    if not os.path.exists(config_path):
+        raise click.ClickException("Config not found. Run 'snip configure' first.")
+    with open(config_path, "rb") as f:
+        return tomllib.load(f)
 
 
 def config_init() -> str:

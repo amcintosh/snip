@@ -1,9 +1,5 @@
-.PHONY: install-dev, tag, clean
-.PHONY: test, check-style
-
-ifeq ($(BRANCH_NAME),)
-BRANCH_NAME="$$(git rev-parse --abbrev-ref HEAD)"
-endif
+.PHONY: install-dev
+.PHONY: test, check-style, test-all
 
 install-dev:
 	poetry install --with dev
