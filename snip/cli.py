@@ -3,7 +3,7 @@ import sys
 
 import click
 
-from snip.config import config_init
+from snip.config import config_init, load_config
 from snip.models import Snippet
 from snip.search import search
 from snip.storage import get_snippets_path, load_snippets, save_snippet
@@ -12,6 +12,12 @@ from snip.sync import sync
 PROMPT_KEY_COLOR = "green"
 PROMPT_CONTENT_COLOR = "cyan"
 PROMPT_USER_CONTENT = "white"
+
+
+def _auto_sync_if_enabled() -> None:
+    config = load_config()
+    if config.get("auto_sync", False):
+        sync()
 
 
 class DefaultSearchGroup(click.Group):
@@ -102,12 +108,14 @@ def new_cmd() -> None:
     tags_input = click.prompt(click.style("tags", fg=PROMPT_CONTENT_COLOR), default="")
     tags = [t.strip() for t in tags_input.split(",") if t.strip()]
     save_snippet(Snippet(key=key, content=content, tags=tags))
+    _auto_sync_if_enabled()
 
 
 @main.command("edit")
 def edit_cmd() -> None:
     """Edit snippets."""
     click.edit(filename=get_snippets_path())
+    _auto_sync_if_enabled()
 
 
 @main.command("configure")

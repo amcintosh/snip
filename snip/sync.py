@@ -12,7 +12,7 @@ GIST_API_URL = "https://api.github.com/gists"
 
 
 def load_gist_config() -> dict:
-    return load_config.get("Gist", {})
+    return load_config().get("Gist", {})
 
 
 def _get_access_token(gist_config: dict) -> str:

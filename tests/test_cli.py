@@ -11,23 +11,6 @@ def runner():
     return CliRunner()
 
 
-class TestNewCommand:
-    def test_save_snippet(self, runner):
-        with patch("snip.cli.save_snippet") as mock_save:
-            result = runner.invoke(main, ["new"], input="my key\nmy content\n\n")
-        assert result.exit_code == 0
-        snippet = mock_save.call_args[0][0]
-        assert snippet.key == "my key"
-        assert snippet.content == "my content"
-        assert snippet.tags == []
-
-    def test_save_snippet__tags(self, runner):
-        with patch("snip.cli.save_snippet") as mock_save:
-            result = runner.invoke(main, ["new"], input="my key\nmy content\ntag1, tag2\n")
-        assert result.exit_code == 0
-        assert mock_save.call_args[0][0].tags == ["tag1", "tag2"]
-
-
 class TestListCommand:
     SNIPPETS = [
         Snippet(key="key1", content="content1", tags=["t1"]),
@@ -119,22 +102,81 @@ class TestSearchCommand:
         assert "index=blah" in result.output
 
 
+class TestNewCommand:
+    def test_save_snippet(self, runner):
+        config = {"auto_sync": False}
+        with (
+            patch("snip.cli.save_snippet") as mock_save,
+            patch("snip.cli.load_config", return_value=config),
+            patch("snip.cli.sync") as mock_sync
+        ):
+            result = runner.invoke(main, ["new"], input="my key\nmy content\n\n")
+        assert result.exit_code == 0
+        snippet = mock_save.call_args[0][0]
+        assert snippet.key == "my key"
+        assert snippet.content == "my content"
+        assert snippet.tags == []
+        mock_sync.assert_not_called()
+
+    def test_save_snippet__with_auto_sync(self, runner):
+        config = {"auto_sync": True}
+        with (
+            patch("snip.cli.save_snippet") as mock_save,
+            patch("snip.cli.load_config", return_value=config),
+            patch("snip.cli.sync") as mock_sync
+        ):
+            result = runner.invoke(main, ["new"], input="my key\nmy content\n\n")
+        assert result.exit_code == 0
+        snippet = mock_save.call_args[0][0]
+        assert snippet.key == "my key"
+        assert snippet.content == "my content"
+        assert snippet.tags == []
+        mock_sync.assert_called_once()
+
+    def test_save_snippet__tags(self, runner):
+        with patch("snip.cli.save_snippet") as mock_save, patch("snip.cli._auto_sync_if_enabled"):
+            result = runner.invoke(main, ["new"], input="my key\nmy content\ntag1, tag2\n")
+        assert result.exit_code == 0
+        assert mock_save.call_args[0][0].tags == ["tag1", "tag2"]
+
+
 class TestEditCommand:
     def test_edit__opens_editor(self, runner, tmp_path):
+        config = {"auto_sync": False}
         snippets_path = str(tmp_path / "snippets.toml")
-        with patch("snip.cli.get_snippets_path", return_value=snippets_path), patch("click.edit") as mock_edit:
+        with (
+            patch("snip.cli.get_snippets_path", return_value=snippets_path),
+            patch("snip.cli.load_config", return_value=config),
+            patch("click.edit") as mock_edit,
+            patch("snip.cli.sync") as mock_sync
+        ):
             result = runner.invoke(main, ["edit"])
         assert result.exit_code == 0
         mock_edit.assert_called_once_with(filename=snippets_path)
+        mock_sync.assert_not_called()
+
+    def test_edit__with_auto_sync(self, runner, tmp_path):
+        config = {"auto_sync": True}
+        snippets_path = str(tmp_path / "snippets.toml")
+        with (
+            patch("snip.cli.get_snippets_path", return_value=snippets_path),
+            patch("snip.cli.load_config", return_value=config),
+            patch("click.edit") as mock_edit,
+            patch("snip.cli.sync") as mock_sync
+        ):
+            result = runner.invoke(main, ["edit"])
+        assert result.exit_code == 0
+        mock_edit.assert_called_once_with(filename=snippets_path)
+        mock_sync.assert_called_once()
 
 
 class TestConfigureCommand:
     def test_opens_editor(self, runner, tmp_path):
         config_path = str(tmp_path / "config.toml")
-        with patch(
-            "snip.cli.config_init",
-            return_value=config_path
-        ), patch("click.edit") as mock_edit:
+        with (
+            patch("snip.cli.config_init", return_value=config_path),
+            patch("click.edit") as mock_edit
+        ):
             result = runner.invoke(main, ["configure"])
         assert result.exit_code == 0
         mock_edit.assert_called_once_with(filename=config_path)

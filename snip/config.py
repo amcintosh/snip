@@ -4,10 +4,11 @@ import tomllib
 import click
 
 DEFAULT_CONFIG = """\
+auto_sync = false
+
 [Gist]
   Public = false
   access_token = ""
-  auto_sync = false
   file_name = "snip.toml"
   gist_id = ""
 """
@@ -18,14 +19,6 @@ def get_config_path() -> str:  # pragma: no cover
     return os.path.join(app_dir, "config.toml")
 
 
-def load_config() -> dict:
-    config_path = get_config_path()
-    if not os.path.exists(config_path):
-        raise click.ClickException("Config not found. Run 'snip configure' first.")
-    with open(config_path, "rb") as f:
-        return tomllib.load(f)
-
-
 def config_init() -> str:
     config_path = get_config_path()
     if not os.path.exists(config_path):
@@ -33,3 +26,11 @@ def config_init() -> str:
         with open(config_path, "w") as f:
             f.write(DEFAULT_CONFIG)
     return config_path
+
+
+def load_config() -> dict:
+    config_path = get_config_path()
+    if not os.path.exists(config_path):
+        raise click.ClickException("Config not found. Run 'snip configure' first.")
+    with open(config_path, "rb") as f:
+        return tomllib.load(f)

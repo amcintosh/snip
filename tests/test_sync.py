@@ -1,5 +1,4 @@
-import os
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -8,11 +7,13 @@ from click.testing import CliRunner
 from snip.cli import main
 from snip.sync import _download, _get_access_token, _get_gist, _upload, sync
 
-GIST_CONFIG = {
-    "access_token": "test-token",
-    "gist_id": "abc123",
-    "file_name": "snip.toml",
-    "Public": False,
+MOCK_CONFIG = {
+    "Gist": {
+        "access_token": "test-token",
+        "gist_id": "abc123",
+        "file_name": "snip.toml",
+        "Public": False
+    }
 }
 
 REMOTE_CONTENT = '[[snippets]]\n  key = "remote"\n  content = "remote content"\n  tags = []\n'
@@ -81,7 +82,7 @@ class TestUpload:
         mock_response = MagicMock()
         mock_response.status_code = 200
         with patch("snip.sync.requests.patch", return_value=mock_response) as mock_patch:
-            _upload(LOCAL_CONTENT, GIST_CONFIG, "token")
+            _upload(LOCAL_CONTENT, MOCK_CONFIG["Gist"], "token")
         mock_patch.assert_called_once()
         assert "abc123" in mock_patch.call_args[0][0]
 
@@ -89,7 +90,7 @@ class TestUpload:
         mock_response = MagicMock()
         mock_response.status_code = 201
         mock_response.json.return_value = {"id": "new-gist-id"}
-        config = {**GIST_CONFIG, "gist_id": ""}
+        config = {**MOCK_CONFIG["Gist"], "gist_id": ""}
         with patch("snip.sync.requests.post", return_value=mock_response):
             _upload(LOCAL_CONTENT, config, "token")
         captured = capsys.readouterr()
@@ -99,7 +100,7 @@ class TestUpload:
         mock_response = MagicMock()
         mock_response.status_code = 200
         with patch("snip.sync.requests.patch", return_value=mock_response):
-            _upload(LOCAL_CONTENT, GIST_CONFIG, "token")
+            _upload(LOCAL_CONTENT, MOCK_CONFIG["Gist"], "token")
         captured = capsys.readouterr()
         assert "Upload success" in captured.out
 
@@ -136,14 +137,14 @@ class TestSync:
         local_time = datetime(2026, 3, 17, tzinfo=timezone.utc)
 
         with (
-            patch("snip.sync.load_gist_config", return_value=GIST_CONFIG),
+            patch("snip.sync.load_config", return_value=MOCK_CONFIG),
             patch("snip.sync.get_snippets_path", return_value=snippets_path),
             patch("snip.sync._get_gist", return_value=(REMOTE_CONTENT, remote_time)),
             patch("snip.sync.os.path.getmtime", return_value=local_time.timestamp()),
             patch("snip.sync._upload") as mock_upload,
         ):
             sync()
-        mock_upload.assert_called_once_with(LOCAL_CONTENT, GIST_CONFIG, "test-token")
+        mock_upload.assert_called_once_with(LOCAL_CONTENT, MOCK_CONFIG["Gist"], "test-token")
 
     def test_downloads_when_remote_is_newer(self, tmp_path):
         snippets_path = str(tmp_path / "snippets.toml")
@@ -154,7 +155,7 @@ class TestSync:
         local_time = datetime(2026, 3, 1, tzinfo=timezone.utc)
 
         with (
-            patch("snip.sync.load_gist_config", return_value=GIST_CONFIG),
+            patch("snip.sync.load_config", return_value=MOCK_CONFIG),
             patch("snip.sync.get_snippets_path", return_value=snippets_path),
             patch("snip.sync._get_gist", return_value=(REMOTE_CONTENT, remote_time)),
             patch("snip.sync.os.path.getmtime", return_value=local_time.timestamp()),
@@ -171,7 +172,7 @@ class TestSync:
         sync_time = datetime(2026, 3, 17, tzinfo=timezone.utc)
 
         with (
-            patch("snip.sync.load_gist_config", return_value=GIST_CONFIG),
+            patch("snip.sync.load_config", return_value=MOCK_CONFIG),
             patch("snip.sync.get_snippets_path", return_value=snippets_path),
             patch("snip.sync._get_gist", return_value=(REMOTE_CONTENT, sync_time)),
             patch("snip.sync.os.path.getmtime", return_value=sync_time.timestamp()),
@@ -184,7 +185,7 @@ class TestSync:
         remote_time = datetime(2026, 3, 17, tzinfo=timezone.utc)
 
         with (
-            patch("snip.sync.load_gist_config", return_value=GIST_CONFIG),
+            patch("snip.sync.load_config", return_value=MOCK_CONFIG),
             patch("snip.sync.get_snippets_path", return_value=snippets_path),
             patch("snip.sync._get_gist", return_value=(REMOTE_CONTENT, remote_time)),
             patch("snip.sync._download") as mock_download,
@@ -197,7 +198,7 @@ class TestSync:
         with open(snippets_path, "w") as f:
             f.write(LOCAL_CONTENT)
 
-        config = {**GIST_CONFIG, "gist_id": ""}
+        config = {**MOCK_CONFIG["Gist"], "gist_id": ""}
         with (
             patch("snip.sync.load_gist_config", return_value=config),
             patch("snip.sync.get_snippets_path", return_value=snippets_path),
