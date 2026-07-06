@@ -80,7 +80,7 @@ def search_cmd(
         subprocess.run(["pbcopy"], input=results[0].content.encode(), check=True)
 
     for snippet in results:
-        click.echo(snippet.content)
+        click.echo(f"{snippet.key}: {snippet.content}")
 
 
 @main.command("list")

@@ -17,7 +17,7 @@ def search(
     """
     # Filter snippets by tag
     if tag is not None:
-        snippets = [s for s in snippets if tag.lower() in s.tags]
+        snippets = [s for s in snippets if tag.lower() in [t.lower() for t in s.tags]]
     if query is None:
         return snippets
 
