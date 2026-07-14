@@ -32,5 +32,8 @@ def load_config() -> dict:
     config_path = get_config_path()
     if not os.path.exists(config_path):
         raise click.ClickException("Config not found. Run 'snip configure' first.")
-    with open(config_path, "rb") as f:
-        return tomllib.load(f)
+    try:
+        with open(config_path, "rb") as f:
+            return tomllib.load(f)
+    except tomllib.TOMLDecodeError as e:
+        raise click.ClickException(f"Reading config file - {e}")

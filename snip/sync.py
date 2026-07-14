@@ -93,6 +93,10 @@ def sync() -> None:
     with open(snippets_path) as f:
         local_content = f.read()
 
+    if local_content == remote_content:
+        click.echo("Already up-to-date")
+        return
+
     if remote_updated_at is None:
         _upload(local_content, gist_config, token)
         return
